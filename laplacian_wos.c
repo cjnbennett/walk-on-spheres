@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
     }
 
     // save to hdf5
-    wos_write_hdf5("laplacian_wos.hdf5", grid, y_start, rank_Ny, u);
+    wos_write_hdf5("laplacian_wos.h5", grid, y_start, rank_Ny, u);
 
     free(u);
     MPI_Finalize();
