@@ -62,7 +62,7 @@ int main()
 
     // point to sample
     Point p0 = { .x = 0.358, .y = 0.134 }; // can embarrassingly parallelise this to many points and reconstruct the entire function u!
-    double tot = 0.0;   // best estimate of u(p0)
+    double mean = 0.0;   // best estimate of u(p0)
 
     for (int i = 0; i < N; i++) {
         Point p = p0;
@@ -82,11 +82,10 @@ int main()
         }
 
         double sample = g(np);
-        tot += sample;
+        mean += (sample - mean) / (i+1);    // Welford mean
     }
-    tot /= N;
 
-    printf("Simulated: u(%f,%f) = %f\n", p0.x, p0.y, tot);
+    printf("Simulated: u(%f,%f) = %f\n", p0.x, p0.y, mean);
 
     return 0;
 }
