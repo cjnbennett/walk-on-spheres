@@ -1,6 +1,6 @@
-// This file implements a simple walk-on-spheres (WoS) to solve the 2D Laplace equation ∆u(x,y) = 0 on a
-// domain Ω, with boundary condition u(x,y) = g(x,y) on ∂Ω. Here Ω is the unit circle, and g(x,y) a
-// paraboloid.
+// This file implements a simple walk-on-spheres (WoS) to solve the 2D Poisson equation ∆u(x,y) = -f(x,y)
+// on a domain Ω, with boundary condition u(x,y) = g(x,y) on ∂Ω. Here Ω is the unit circle, and g(x,y) a
+// paraboloid. To recover the 2D Laplace equation, set f(x,y) = 0.
 #include <math.h>
 #include <mpi.h>
 #include <stdbool.h>
@@ -14,6 +14,10 @@
 
 typedef struct { double x, y; } Point;
 
+double dist(Point a, Point b) {
+    return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
+}
+
 typedef struct {
     Point centre;
     double radius;
@@ -25,9 +29,20 @@ typedef struct {
     double radius;
 } Sphere;
 
+// f: source function, defined on Ω
+double f(Point p) {
+    return sqrt(pow(p.x - 0.5, 2) + pow(p.y, 2)) <= 0.5 ? 5.0 : 0.0;          // step-function disk
+}
+
 // g: boundary value function for u(x,y), defined for (x,y) ∈ ∂Ω
 double g(Point p) {
     return pow(p.x, 2) - pow(p.y, 2);     // hyperbolic paraboloid (saddle)
+}
+
+// Green's function for PDE operator on spherical domain
+double G(Sphere sphere, Point x, Point y) {
+    // Green's function for Laplace operator on 2D spherical domain ("harmonic")
+    return log(sphere.radius / dist(x,y)) / (2*M_PI);
 }
 
 // check whether a point is in the domain
@@ -45,19 +60,27 @@ Point npq(CircleBoundary boundary, Point from) {
     return np;
 }
 
-double dist(Point a, Point b) {
-    return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
-}
-
 // perform a singular step of the walk exiting on a sphere
 Point step(Sphere sphere) {
-    // for the Laplacian, the exit distribution is uniform
+    // for standard WoS, the exit distribution is uniform
     double theta = (double)rand() / (double)RAND_MAX * 2*M_PI;
     Point exit = {
         .x = sphere.centre.x + sphere.radius * cos(theta),
         .y = sphere.centre.y + sphere.radius * sin(theta)
     };
     return exit;
+}
+
+// draw a sample uniformly from a sphere, e.g. for sampling the source contribution
+Point source_sample(Sphere sphere) {
+    // uniform sampling
+    double theta = (double)rand() / (double)RAND_MAX * 2*M_PI;
+    double r = sphere.radius * sqrt((double)rand() / (double)RAND_MAX);
+    Point sp = {
+        .x = sphere.centre.x + r * cos(theta),
+        .y = sphere.centre.y + r * sin(theta)
+    };
+    return sp;
 }
 
 // perform Monte Carlo walk-on-spheres to estimate u(p0) at a point p0
@@ -72,7 +95,15 @@ double wos(CircleBoundary boundary, Point p0, int N_walks, double epsilon) {
             .radius = dist(np, p)
         };
 
+        double sample = 0.0;
+
         while (sphere.radius > epsilon) {
+            // for a PDE containing a source term (e.g. Poisson equation), we must accumulate a source
+            // contribution for non-exiting walks
+            Point sp = source_sample(sphere);
+            sample += M_PI*pow(sphere.radius,2) * f(sp) * G(sphere, p, sp);
+            
+            // iterate
             p = step(sphere);
             np = npq(boundary, p);
             sphere = (Sphere){
@@ -81,7 +112,7 @@ double wos(CircleBoundary boundary, Point p0, int N_walks, double epsilon) {
             };
         }
 
-        double sample = g(np);
+        sample += g(np);
         mean += (sample - mean) / (i+1);    // Welford mean
     }
 
@@ -156,7 +187,7 @@ int main(int argc, char **argv) {
     }
 
     // save to hdf5
-    wos_write_hdf5("laplacian_wos.h5", grid, y_start, rank_Ny, u);
+    wos_write_hdf5("poisson_wos.h5", grid, y_start, rank_Ny, u);
 
     free(u);
     MPI_Finalize();
