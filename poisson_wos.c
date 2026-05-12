@@ -137,6 +137,12 @@ int main(int argc, char **argv) {
         }
     }
 
+    // guard against too many nodes being launched
+    if (size > Ny) {
+        fprintf(stderr, "too many nodes launched, size %d > Ny %d\n", size, Ny);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
     MPI_Bcast(&Nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&Ny, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&N_walks, 1, MPI_INT, 0, MPI_COMM_WORLD);
