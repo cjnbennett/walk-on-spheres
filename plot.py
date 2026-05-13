@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 p = argparse.ArgumentParser()
 p.add_argument("input", nargs="?", default="poisson_wos.h5")
 p.add_argument("-o", "--output", default="u.png")
-p.add_argument("--mesh", default="meshes/unit_circle.obj", help=".obj file for the domain boundary overlay")
+p.add_argument("--mesh", default="meshes/annulus.obj", help=".obj file for the domain boundary overlay")
 p.add_argument("--cmap", default="RdBu_r")
 args = p.parse_args()
 

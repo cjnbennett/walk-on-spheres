@@ -13,8 +13,8 @@ int winding_number(const Mesh2D *m, Point2D p) {
 
     for (int s = 0; s < m->n_segs; s++) {   // naive O(n_segs) - can be improved using BVH
         // endpoints of segment
-        Point2D s0 = m->verts[m->segs[s]];
-        Point2D s1 = m->verts[m->segs[s+1]];
+        Point2D s0 = m->verts[m->segs[2*s + 0]];
+        Point2D s1 = m->verts[m->segs[2*s + 1]];
 
         if (s0.y <= p.y) {
             if (s1.y > p.y && signed_tri_area(s0,s1,p) > 0) wn++;   // s0->s1 crosses up through p

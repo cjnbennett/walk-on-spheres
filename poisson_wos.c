@@ -1,6 +1,6 @@
 // This file implements a simple walk-on-spheres (WoS) to solve the 2D Poisson equation ∆u(x,y) = -f(x,y)
-// on a domain Ω, with boundary condition u(x,y) = g(x,y) on ∂Ω. Here Ω is an arbitary 2D mesh, and g(x,y)
-// a paraboloid. To recover the 2D Laplace equation, set f(x,y) = 0.
+// on a domain Ω, with boundary condition u(x,y) = g(x,y) on ∂Ω. Here Ω is an arbitary 2D mesh. To
+// recover the 2D Laplace equation, set f(x,y) = 0.
 #include <math.h>
 #include <mpi.h>
 #include <stdbool.h>
@@ -23,12 +23,15 @@ typedef struct {
 
 // f: source function, defined on Ω
 double f(Point2D p) {
-    return sqrt(pow(p.x - 0.5, 2) + pow(p.y, 2)) <= 0.5 ? 5.0 : 0.0;          // step-function disk
+    // a bump centred at (0.65, 0) with radius 0.15
+    return sqrt(pow(p.x - 0.65, 2) + pow(p.y, 2)) <= 0.15 ? 10.0 : 0.0;
 }
 
 // g: boundary value function for u(x,y), defined for (x,y) ∈ ∂Ω
 double g(Point2D p) {
-    return pow(p.x, 2) - pow(p.y, 2);     // hyperbolic paraboloid (saddle)
+    double r = sqrt(p.x*p.x + p.y*p.y);
+    return r > 0.7 ? p.x*p.x - p.y*p.y      // outer: saddle
+                   : 0.0;                   // inner: zero
 }
 
 // Green's function for PDE operator on spherical domain
@@ -117,7 +120,7 @@ int main(int argc, char **argv) {
         if (argc >= 4) {
             mesh_filename = argv[3];
         } else {
-            mesh_filename = "meshes/unit_circle.obj";
+            mesh_filename = "meshes/annulus.obj";
         }
     }
 

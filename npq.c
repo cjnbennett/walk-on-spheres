@@ -31,8 +31,8 @@ double npq_mesh_2D(const Mesh2D *m, Point2D p, Point2D *nearest) {
 
     for (int s = 0; s < m->n_segs; s++) {   // naive O(n_segs) - can be improved using BVH
         // endpoints of segment
-        Point2D s0 = m->verts[m->segs[s]];
-        Point2D s1 = m->verts[m->segs[s+1]];
+        Point2D s0 = m->verts[m->segs[2*s + 0]];
+        Point2D s1 = m->verts[m->segs[2*s + 1]];
 
         Point2D seg_nearest;  // store closest point on current seg
         double d_sq = npq_seg(s0, s1, p, &seg_nearest);

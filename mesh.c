@@ -40,8 +40,8 @@ Mesh2D load_mesh_2D(const char *path) {
     Mesh2D mesh = {
         .n_verts = vert_count,
         .n_segs = seg_count,
-        .verts = malloc(vert_count * sizeof *mesh.verts),  // x1,y1,x2,y2,...
-        .segs = malloc((seg_count+1) * sizeof *mesh.segs)     // v0,v1,v2,...,vn,v0
+        .verts = malloc(vert_count * sizeof *mesh.verts),       // x1,y1,x2,y2,...
+        .segs = malloc(2 * seg_count * sizeof *mesh.segs)       // [s0_start, s0_end, s1_start, s1_end, ...]
     };
     if (!mesh.verts || !mesh.segs) {
         fprintf(stderr, "Could not allocate memory while building mesh\n");
@@ -60,13 +60,20 @@ Mesh2D load_mesh_2D(const char *path) {
             Point2D p = { .x = x, .y = y };
             mesh.verts[v_idx++] = p;
         } else if (line[0] == 'l' && isspace((unsigned char)line[1])) {
-            // parse polyline vertex ordering
+            // parse polyline vertex ordering, emit consecutive pairs as segments
             char *curr = line + 2;
+            int prev_vert = -1;     // 0-indexed previous vertex; -1 sentinel = first index of this polyline
             int vert;
             int shift;
             while (*curr != '\0' && sscanf(curr, " %d%n", &vert, &shift) == 1) {     // consume whitespace and next integer
                 curr += shift;
-                mesh.segs[s_idx++] = vert-1;    // .obj vertices are 1-indexed => convert to 0-indexed
+                vert--;         // .obj vertices are 1-indexed => convert to 0-indexed
+                if (prev_vert >= 0) {
+                    mesh.segs[2*s_idx + 0] = prev_vert;
+                    mesh.segs[2*s_idx + 1] = vert;
+                    s_idx++;
+                }
+                prev_vert = vert;
             }
         }
     }
@@ -90,10 +97,10 @@ void bcast_mesh_2D(Mesh2D *m, int leader_rank, MPI_Comm comm) {
     if (rank != leader_rank) {
         // allocate memory
         m->verts = malloc(m->n_verts * sizeof *m->verts);
-        m->segs = malloc((m->n_segs+1) * sizeof *m->segs);
+        m->segs = malloc(2 * m->n_segs * sizeof *m->segs);
         if (!m->verts || !m->segs) MPI_Abort(comm, 1);
     }
 
     MPI_Bcast(m->verts, 2 * m->n_verts, MPI_DOUBLE, leader_rank, comm); // broadcasts double x, y directly rather than Point2D struct
-    MPI_Bcast(m->segs, (m->n_segs+1), MPI_INT, leader_rank, comm);
+    MPI_Bcast(m->segs, 2 * m->n_segs, MPI_INT, leader_rank, comm);
 }
