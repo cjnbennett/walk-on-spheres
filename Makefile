@@ -1,0 +1,35 @@
+# Build script
+#
+#   make                      # default: h5pcc (MacOS)
+#   make CC=cc                # Setonix
+#                             # fallback: plain mpicc + explicit HDF5 link
+#   make -j4                  # parallel compile, with 4 cores
+#   make clean                # remove artefacts
+
+CC        = h5pcc
+CFLAGS   ?= -O3 -Wall -Wextra
+LDLIBS    = -lm
+
+BUILD_DIR ?= build
+
+TARGET    = $(BUILD_DIR)/poisson_wos
+SRCS      = poisson_wos.c mesh.c inside.c npq.c
+OBJS      = $(SRCS:%.c=$(BUILD_DIR)/%.o)
+HEADERS   = mesh.h inside.h npq.h grid.h hash.h hdf5_io.h
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+# Any header change rebuilds every object
+$(BUILD_DIR)/%.o: %.c $(HEADERS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_DIR):
+	mkdir -p $@
+
+clean:
+	rm -rf $(BUILD_DIR)
