@@ -31,24 +31,26 @@ int winding_number(const Mesh *m, Point2D p) {
 
 // Möller-Trumbore ray-triangle intersection algorithm
 bool moller_trumbore(Point3D p, Vec3D ray, Point3D a, Point3D b, Point3D c) {
+    // TODO - not very robust (boundary points occasionally excluded)
+    const double EPSILON = 1e-9;
     Vec3D edge1 = { .x = b.x - a.x, .y = b.y - a.y, .z = b.z - a.z };
     Vec3D edge2 = { .x = c.x - a.x, .y = c.y - a.y, .z = c.z - a.z };
 
     Vec3D rxe2 = cross(ray, edge2);
     double det = dot(edge1, rxe2);
-    if (fabs(det) <= DBL_EPSILON) return false;     // ray parallel to tri
+    if (fabs(det) <= EPSILON) return false;     // ray parallel to tri
 
     Vec3D s = { .x = p.x - a.x, .y = p.y - a.y, .z = p.z - a.z };
     double u = dot(s, rxe2) / det;
-    if (u < -DBL_EPSILON || u-1 > DBL_EPSILON) return false;    // ray outside edge2 bounds
+    if (u < -EPSILON || u-1 > EPSILON) return false;    // ray outside edge2 bounds
 
     Vec3D sxe1 = cross(s, edge1);
     double v = dot(ray, sxe1) / det;
-    if (v < -DBL_EPSILON || u+v-1 > DBL_EPSILON) return false;  // ray outside edge1 bounds
+    if (v < -EPSILON || u+v-1 > EPSILON) return false;  // ray outside edge1 bounds
 
     // ray intersects tri - find intersection
     double t = dot(edge2, sxe1) / det;  // t is the distance between p and the intersection
-    if (t > DBL_EPSILON) {  // ray intersection
+    if (t > EPSILON) {  // ray intersection
         return true;
     } else {    // line intersection, but not ray intersection
         return false;
@@ -83,5 +85,12 @@ bool inside_mesh_2D(const Mesh *m, Point2D p) {
 }
 
 bool inside_mesh_3D(const Mesh *m, Point3D p) {
-    return count_ray_tri_intersect(m, p) % 2 == 1;
+    const int N_RAYS = 3;
+
+    int total = 0;
+    for (int i = 0; i < N_RAYS; i++) {
+        int hits = count_ray_tri_intersect(m, p);
+        total += (hits & 1);
+    }
+    return total > N_RAYS/2;  // majority vote of N_RAYS for robustness
 }

@@ -1,4 +1,5 @@
-# Unit cube centred at the origin, triangulated.
+# Cube centred at the origin, half-extent 0.55 (10% larger than unit cube)
+# to avoid grid points landing exactly on the boundary.
 # 8 vertices, 12 triangles (2 per face). All triangles wound CCW as
 # viewed from outside, so face normals point outward by the right-hand rule.
 #
@@ -11,35 +12,35 @@
 #        |/        |/
 #      1 +---------+ 2
 
-v -0.5 -0.5 -0.5
-v  0.5 -0.5 -0.5
-v  0.5  0.5 -0.5
-v -0.5  0.5 -0.5
-v -0.5 -0.5  0.5
-v  0.5 -0.5  0.5
-v  0.5  0.5  0.5
-v -0.5  0.5  0.5
+v -0.55 -0.55 -0.55
+v  0.55 -0.55 -0.55
+v  0.55  0.55 -0.55
+v -0.55  0.55 -0.55
+v -0.55 -0.55  0.55
+v  0.55 -0.55  0.55
+v  0.55  0.55  0.55
+v -0.55  0.55  0.55
 
-# bottom (z = -0.5,  normal -z)
+# bottom (z = -0.55,  normal -z)
 f 1 4 3
 f 1 3 2
 
-# top    (z = +0.5,  normal +z)
+# top    (z = +0.55,  normal +z)
 f 5 6 7
 f 5 7 8
 
-# front  (y = -0.5,  normal -y)
+# front  (y = -0.55,  normal -y)
 f 1 2 6
 f 1 6 5
 
-# back   (y = +0.5,  normal +y)
+# back   (y = +0.55,  normal +y)
 f 3 4 8
 f 3 8 7
 
-# left   (x = -0.5,  normal -x)
+# left   (x = -0.55,  normal -x)
 f 4 1 5
 f 4 5 8
 
-# right  (x = +0.5,  normal +x)
+# right  (x = +0.55,  normal +x)
 f 2 3 7
 f 2 7 6

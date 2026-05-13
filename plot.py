@@ -72,7 +72,8 @@ else:
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     cmap = plt.get_cmap(args.cmap)
 
-    fig = plt.figure(figsize=(16, 5), constrained_layout=True)
+    fig = plt.figure(figsize=(17, 6.5), constrained_layout=True)
+    fig.get_layout_engine().set(h_pad=0.15, w_pad=0.20)
 
     # XZ slice at middle y
     ax_xz = fig.add_subplot(1, 3, 1)
@@ -94,7 +95,7 @@ else:
 
     # 3D mesh + slice planes overlaid
     ax_3D = fig.add_subplot(1, 3, 3, projection="3d")
-    ax_3D.add_collection3d(Poly3DCollection([verts[t] for t in tris], alpha=0.10, edgecolor="k", facecolor="lightgray", linewidth=0.3))
+    ax_3D.add_collection3d(Poly3DCollection([verts[t] for t in tris], alpha=0.33, edgecolor="k", facecolor="lightgray", linewidth=0.3))
 
     # XZ slice plane at y_mid, coloured by u[:, y_mid, :]
     XZ_x, XZ_z = np.meshgrid(x, z)
@@ -108,6 +109,7 @@ else:
     ax_3D.set_xlim(verts[:, 0].min() - pad3D, verts[:, 0].max() + pad3D)
     ax_3D.set_ylim(verts[:, 1].min() - pad3D, verts[:, 1].max() + pad3D)
     ax_3D.set_zlim(verts[:, 2].min() - pad3D, verts[:, 2].max() + pad3D)
+    ax_3D.set_box_aspect(np.ptp(verts, axis=0))  # match data aspect ratio
     ax_3D.set_xlabel("x")
     ax_3D.set_ylabel("y")
     ax_3D.set_zlabel("z")
