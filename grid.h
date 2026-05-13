@@ -1,7 +1,8 @@
 #pragma once
 
 typedef struct {
-    int Nx, Ny;
+    int Nx, Ny, Nz;
     double xmin, xmax;
     double ymin, ymax;
+    double zmin, zmax;
 } Grid;
