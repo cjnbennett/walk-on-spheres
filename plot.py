@@ -24,7 +24,7 @@ is_3D = u.shape[2] > 1
 
 # read .obj boundary
 verts_raw: list[list[float]] = []
-segs_raw: list[list[int]] = []
+segs: list[list[int]] = []
 tris_raw: list[list[int]] = []
 with open(args.mesh) as mf:
     for line in mf:
@@ -34,12 +34,11 @@ with open(args.mesh) as mf:
         if parts[0] == "v":
             verts_raw.append([float(parts[1]), float(parts[2]), float(parts[3]) if len(parts) > 3 else 0.0])
         elif parts[0] == "l":
-            segs_raw.append([int(i) - 1 for i in parts[1:]])
+            segs.append([int(i) - 1 for i in parts[1:]])
         elif parts[0] == "f":
             tris_raw.append([int(p.split("/")[0]) - 1 for p in parts[1:4]])
 
 verts = np.array(verts_raw)
-segs = np.array(segs_raw)
 tris = np.array(tris_raw)
 
 # diverging colour scale around 0 if data spans both signs
