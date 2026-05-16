@@ -1,5 +1,6 @@
 #pragma once
 #include <math.h>
+#include "bvh.h"
 #include "mesh.h"
 
 // spheres for WoS
@@ -32,8 +33,8 @@ Point3D sphere_sample_3D(Sphere3D sphere);
 // static dispatch for sphere sample
 #define sphere_sample(sphere) _Generic((sphere), Sphere2D: sphere_sample_2D, Sphere3D: sphere_sample_3D)((sphere))
 
-double wos_2D(const Mesh *Ω, Point2D p0, double (*source)(Point2D), double (*boundary)(Point2D), double (*green)(Sphere2D,Point2D,Point2D), int N_walks, double epsilon);
-double wos_3D(const Mesh *Ω, Point3D p0, double (*source)(Point3D), double (*boundary)(Point3D), double (*green)(Sphere3D,Point3D,Point3D), int N_walks, double epsilon);
+double wos_2D(const BVH *bvh, Point2D p0, double (*source)(Point2D), double (*boundary)(Point2D), double (*green)(Sphere2D,Point2D,Point2D), int N_walks, double epsilon);
+double wos_3D(const BVH *bvh, Point3D p0, double (*source)(Point3D), double (*boundary)(Point3D), double (*green)(Sphere3D,Point3D,Point3D), int N_walks, double epsilon);
 // static dispatch for WoS
-#define wos(Ω, p0, source, boundary, green, N_walks, epsilon) _Generic((p0), Point2D: wos_2D, Point3D: wos_3D)((Ω), (p0), (source), (boundary), (green), (N_walks), (epsilon))
+#define wos(bvh, p0, source, boundary, green, N_walks, epsilon) _Generic((p0), Point2D: wos_2D, Point3D: wos_3D)((bvh), (p0), (source), (boundary), (green), (N_walks), (epsilon))
 

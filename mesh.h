@@ -28,6 +28,11 @@ static inline double dot(Vec3D a, Vec3D b) {
 }
 
 typedef struct {
+    Point3D pmax;
+    Point3D pmin;
+} AABB;
+
+typedef struct {
     int dim;
     int n_verts;
     int n_prims;
@@ -42,3 +47,6 @@ Mesh load_mesh(const char *path);
 void free_mesh(Mesh *m);
 void bcast_mesh(Mesh *m, int leader_rank, MPI_Comm comm);
 void mesh_bbox(const Mesh *m, double *xmin, double *xmax, double *ymin, double *ymax, double *zmin, double *zmax);
+
+AABB prim_bbox(const Mesh *m, int p);
+Point3D centroid(const Mesh *m, int p);

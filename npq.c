@@ -26,7 +26,8 @@ double npq_seg(Point2D s0, Point2D s1, Point2D p, Point2D *nearest) {
 }
 
 // nearest point query on 2D Mesh. Returns the nearest point distance and writes the nearest point to *nearest
-double npq_mesh_2D(const Mesh *m, Point2D p, Point2D *nearest) {
+// deprecated by bvh npq
+double npq_naive_2D(const Mesh *m, Point2D p, Point2D *nearest) {
     double closest_d_sq = INFINITY;         // closest squared distance so far
 
     for (int s = 0; s < m->n_prims; s++) {   // naive O(n_prims) - can be improved using BVH
@@ -187,7 +188,8 @@ double eberly(Point3D p, Point3D v0, Point3D v1, Point3D v2, Point3D *nearest) {
 }
 
 // nearest point query on 3D Mesh. Returns the nearest point distance and writes the nearest point to *nearest
-double npq_mesh_3D(const Mesh *m, Point3D p, Point3D *nearest) {
+// deprecated by bvh npq implementation
+double npq_naive_3D(const Mesh *m, Point3D p, Point3D *nearest) {
     double closest_d_sq = INFINITY;         // closest squared distance so far
 
     for (int s = 0; s < m->n_prims; s++) {   // naive O(n_prims) - can be improved using BVH

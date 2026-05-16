@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
+#include "bvh.h"
 #include "grid.h"
 #include "hash.h"
 #include "hdf5_io.h"
@@ -97,6 +98,10 @@ int main(int argc, char **argv) {
     bcast_mesh(&Ω, 0, MPI_COMM_WORLD);
     if (rank == 0) printf("Finished broadcasting.\n");
 
+    if (rank == 0) printf("Building BVH...\n");
+    BVH *bvh = build_bvh(&Ω);
+    if (rank == 0) printf("Finished BVH build.\n");
+
     // setup domain discretisation
     if (Ω.dim == 2) Nz = 1;
     Grid grid = { .Nx = Nx, .Ny = Ny, .Nz = Nz };
@@ -146,10 +151,10 @@ int main(int argc, char **argv) {
                 // sample only points in the domain
                 if (Ω.dim == 2) {
                     Point2D p0 = { x, y };
-                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(&Ω, p0, &f_2D, &g_2D, &G_2D, N_walks, epsilon) : NAN;
+                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_2D, &g_2D, &G_2D, N_walks, epsilon) : NAN;
                 } else {
                     Point3D p0 = { x, y, z };
-                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(&Ω, p0, &f_3D, &g_3D, &G_3D, N_walks, epsilon) : NAN;
+                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_3D, &g_3D, &G_3D, N_walks, epsilon) : NAN;
                 }
             }
         }
@@ -160,6 +165,7 @@ int main(int argc, char **argv) {
     wos_write_hdf5("poisson_wos.h5", grid, x_start, y_start, z_start, block_Nx, block_Ny, block_Nz, (const double *)u);
     if (rank == 0) printf("Finished writing.\n");
 
+    free_bvh(bvh);
     free_mesh(&Ω);
     free(u);
     MPI_Finalize();

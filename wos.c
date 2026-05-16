@@ -1,6 +1,6 @@
 #include <stdlib.h>
+#include "bvh.h"
 #include "mesh.h"
-#include "npq.h"
 #include "wos.h"
 
 // perform a singular step of the walk exiting on a sphere
@@ -60,7 +60,7 @@ Point3D sphere_sample_3D(Sphere3D sphere) {
 // perform Monte Carlo walk-on-spheres (2D) to estimate u(p0) at a point p0
 // source : function pointer to an inhomogeneous source term f(x,y)
 // boundary : function pointer to Dirichlet boundary condition g(x,y)
-double wos_2D(const Mesh *Ω,
+double wos_2D(const BVH *bvh,
               Point2D p0,
               double (*source)(Point2D),
               double (*boundary)(Point2D),
@@ -73,7 +73,7 @@ double wos_2D(const Mesh *Ω,
     for (int i = 0; i < N_walks; i++) {
         Point2D p = p0;
         Point2D np;
-        double r = npq_mesh(Ω, p, &np);
+        double r = bvh_npq(bvh, p, &np);
         Sphere2D sphere = {
             .centre = p,
             .radius = r
@@ -89,7 +89,7 @@ double wos_2D(const Mesh *Ω,
             
             // iterate
             p = step(sphere);
-            r = npq_mesh(Ω, p, &np);
+            r = bvh_npq(bvh, p, &np);
             sphere = (Sphere2D){
                 .centre = p,
                 .radius = r
@@ -104,7 +104,7 @@ double wos_2D(const Mesh *Ω,
 }
 
 
-double wos_3D(const Mesh *Ω,
+double wos_3D(const BVH *bvh,
               Point3D p0,
               double (*source)(Point3D),
               double (*boundary)(Point3D),
@@ -117,7 +117,7 @@ double wos_3D(const Mesh *Ω,
     for (int i = 0; i < N_walks; i++) {
         Point3D p = p0;
         Point3D np;
-        double r = npq_mesh(Ω, p, &np);
+        double r = bvh_npq(bvh, p, &np);
         Sphere3D sphere = {
             .centre = p,
             .radius = r
@@ -133,7 +133,7 @@ double wos_3D(const Mesh *Ω,
             
             // iterate
             p = step(sphere);
-            r = npq_mesh(Ω, p, &np);
+            r = bvh_npq(bvh, p, &np);
             sphere = (Sphere3D){
                 .centre = p,
                 .radius = r

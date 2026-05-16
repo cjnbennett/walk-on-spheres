@@ -206,3 +206,45 @@ void bcast_mesh(Mesh *m, int leader_rank, MPI_Comm comm) {
     else MPI_Bcast(m->verts3d, m->dim * m->n_verts, MPI_DOUBLE, leader_rank, comm);
     MPI_Bcast(m->prims, m->dim * m->n_prims, MPI_INT, leader_rank, comm);
 }
+
+AABB prim_bbox(const Mesh *m, int p) {
+    AABB bbox;
+
+    if (m->dim == 2) {
+        Point2D s0 = m->verts2d[m->prims[2*p + 0]];
+        Point2D s1 = m->verts2d[m->prims[2*p + 1]];
+
+        bbox.pmin.x = fmin(s0.x, s1.x);
+        bbox.pmin.y = fmin(s0.y, s1.y);
+        bbox.pmin.z = 0.0;
+        bbox.pmax.x = fmax(s0.x, s1.x);
+        bbox.pmax.y = fmax(s0.y, s1.y);
+        bbox.pmax.z = 0.0;
+    } else {
+        Point3D v0 = m->verts3d[m->prims[3*p + 0]];
+        Point3D v1 = m->verts3d[m->prims[3*p + 1]];
+        Point3D v2 = m->verts3d[m->prims[3*p + 2]];
+
+        bbox.pmin.x = fmin(fmin(v0.x, v1.x), v2.x);
+        bbox.pmin.y = fmin(fmin(v0.y, v1.y), v2.y);
+        bbox.pmin.z = fmin(fmin(v0.z, v1.z), v2.z);
+        bbox.pmax.x = fmax(fmax(v0.x, v1.x), v2.x);
+        bbox.pmax.y = fmax(fmax(v0.y, v1.y), v2.y);
+        bbox.pmax.z = fmax(fmax(v0.z, v1.z), v2.z);
+    }
+
+    return bbox;
+}
+
+Point3D centroid(const Mesh *m, int p) {
+    if (m->dim == 2) {
+        Point2D s0 = m->verts2d[m->prims[2*p + 0]];
+        Point2D s1 = m->verts2d[m->prims[2*p + 1]];
+        return (Point3D){ .x=(s0.x+s1.x)/2.0, .y=(s0.y+s1.y)/2.0, .z=0.0 };
+    }
+
+    Point3D v0 = m->verts3d[m->prims[3*p + 0]];
+    Point3D v1 = m->verts3d[m->prims[3*p + 1]];
+    Point3D v2 = m->verts3d[m->prims[3*p + 2]];
+    return (Point3D){ .x=(v0.x+v1.x+v2.x)/3.0, .y=(v0.y+v1.y+v2.y)/3.0, .z=(v0.z+v1.z+v2.z)/3.0 };
+}
