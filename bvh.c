@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "bvh.h"
+#include "fastmath.h"
 #include "npq.h"
 #include "mesh.h"
 
@@ -28,14 +29,14 @@ struct BVH {
 
 // returns lower bound for squared distance to nearest point in aabb from p
 static inline double aabb_d_sq_2D(const AABB *aabb, Point2D p) {
-    double dx = fmax(0.0, fmax(aabb->pmin.x - p.x, p.x - aabb->pmax.x));
-    double dy = fmax(0.0, fmax(aabb->pmin.y - p.y, p.y - aabb->pmax.y));
+    double dx = dmax(0.0, dmax(aabb->pmin.x - p.x, p.x - aabb->pmax.x));
+    double dy = dmax(0.0, dmax(aabb->pmin.y - p.y, p.y - aabb->pmax.y));
     return dx*dx + dy*dy;
 }
 static inline double aabb_d_sq_3D(const AABB *aabb, Point3D p) {
-    double dx = fmax(0.0, fmax(aabb->pmin.x - p.x, p.x - aabb->pmax.x));
-    double dy = fmax(0.0, fmax(aabb->pmin.y - p.y, p.y - aabb->pmax.y));
-    double dz = fmax(0.0, fmax(aabb->pmin.z - p.z, p.z - aabb->pmax.z));
+    double dx = dmax(0.0, dmax(aabb->pmin.x - p.x, p.x - aabb->pmax.x));
+    double dy = dmax(0.0, dmax(aabb->pmin.y - p.y, p.y - aabb->pmax.y));
+    double dz = dmax(0.0, dmax(aabb->pmin.z - p.z, p.z - aabb->pmax.z));
     return dx*dx + dy*dy + dz*dz;
 }
 
@@ -43,12 +44,12 @@ static AABB union_bbox(const BVHBuildNode *centroids, int start, int end) {
     AABB u_bbox = centroids[start].bbox;
     for (int i = start + 1; i < end; i++) {
         AABB c_bbox = centroids[i].bbox;
-        u_bbox.pmin.x = fmin(u_bbox.pmin.x, c_bbox.pmin.x);
-        u_bbox.pmin.y = fmin(u_bbox.pmin.y, c_bbox.pmin.y);
-        u_bbox.pmin.z = fmin(u_bbox.pmin.z, c_bbox.pmin.z);
-        u_bbox.pmax.x = fmax(u_bbox.pmax.x, c_bbox.pmax.x);
-        u_bbox.pmax.y = fmax(u_bbox.pmax.y, c_bbox.pmax.y);
-        u_bbox.pmax.z = fmax(u_bbox.pmax.z, c_bbox.pmax.z);
+        u_bbox.pmin.x = dmin(u_bbox.pmin.x, c_bbox.pmin.x);
+        u_bbox.pmin.y = dmin(u_bbox.pmin.y, c_bbox.pmin.y);
+        u_bbox.pmin.z = dmin(u_bbox.pmin.z, c_bbox.pmin.z);
+        u_bbox.pmax.x = dmax(u_bbox.pmax.x, c_bbox.pmax.x);
+        u_bbox.pmax.y = dmax(u_bbox.pmax.y, c_bbox.pmax.y);
+        u_bbox.pmax.z = dmax(u_bbox.pmax.z, c_bbox.pmax.z);
     }
     return u_bbox;
 }
