@@ -12,8 +12,9 @@
 #include "grid.h"
 #include "hash.h"
 #include "hdf5_io.h"
-#include "mesh.h"
 #include "inside.h"
+#include "mesh.h"
+#include "prng.h"
 #include "wos.h"
 
 // f: source function, defined on Ω
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
     uint64_t seed;
     if (rank == 0) seed = (uint64_t)time(NULL);
     MPI_Bcast(&seed, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
-    srand((unsigned int)(seed ^ splitmix64((uint64_t)rank)));   // note: this is probably a really bad way to set the seed
+    prng_seed(seed ^ splitmix64((uint64_t)rank));
 
     // load mesh as domain
     Mesh Ω = {0};

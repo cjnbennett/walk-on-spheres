@@ -1,8 +1,8 @@
 #include <float.h>
 #include <math.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include "mesh.h"
+#include "prng.h"
 
 // check which side of a line segment a point p is on using signed triangle area
 // > 0 : left, < 0 : right, = 0 : collinear
@@ -61,8 +61,8 @@ bool moller_trumbore(Point3D p, Vec3D ray, Point3D a, Point3D b, Point3D c) {
 int count_ray_tri_intersect(const Mesh *m, Point3D p) {
     int intersects = 0;
 
-    double u = (double)rand() / RAND_MAX;
-    double v = (double)rand() / RAND_MAX;
+    double u = prng_unit();
+    double v = prng_unit();
     double z = 2*u-1;
     double phi = 2*M_PI*v;
     double r = sqrt(1-z*z);

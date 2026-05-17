@@ -1,12 +1,12 @@
-#include <stdlib.h>
 #include "bvh.h"
 #include "mesh.h"
+#include "prng.h"
 #include "wos.h"
 
 // perform a singular step of the walk exiting on a sphere
 Point2D step_2D(Sphere2D sphere) {
     // for standard WoS, the exit distribution is uniform
-    double theta = (double)rand() / (double)RAND_MAX * 2*M_PI;
+    double theta = prng_unit() * 2*M_PI;
     Point2D exit = {
         .x = sphere.centre.x + sphere.radius * cos(theta),
         .y = sphere.centre.y + sphere.radius * sin(theta)
@@ -15,8 +15,8 @@ Point2D step_2D(Sphere2D sphere) {
 }
 Point3D step_3D(Sphere3D sphere) {
     // sample uniformly from surface
-    double u = (double)rand() / RAND_MAX;
-    double v = (double)rand() / RAND_MAX;
+    double u = prng_unit();
+    double v = prng_unit();
     double z = 2*u-1;
     double phi = 2*M_PI*v;
     double r = sqrt(1-z*z);
@@ -31,8 +31,8 @@ Point3D step_3D(Sphere3D sphere) {
 
 // draw a sample uniformly from the volume of a sphere, e.g. for sampling the source contribution
 Point2D sphere_sample_2D(Sphere2D sphere) {
-    double theta = (double)rand() / (double)RAND_MAX * 2*M_PI;
-    double r = sphere.radius * sqrt((double)rand() / (double)RAND_MAX);
+    double theta = prng_unit() * 2*M_PI;
+    double r = sphere.radius * sqrt(prng_unit());
 
     Point2D sp = {
         .x = sphere.centre.x + r * cos(theta),
@@ -41,9 +41,9 @@ Point2D sphere_sample_2D(Sphere2D sphere) {
     return sp;
 }
 Point3D sphere_sample_3D(Sphere3D sphere) {
-    double u = (double)rand() / RAND_MAX;
-    double v = (double)rand() / RAND_MAX;
-    double w = (double)rand() / RAND_MAX;
+    double u = prng_unit();
+    double v = prng_unit();
+    double w = prng_unit();
     double z = 2*u-1;
     double phi = 2*M_PI*v;
     double surf_fac = sqrt(1 - z*z);
