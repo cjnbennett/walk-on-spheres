@@ -70,10 +70,13 @@ double wos_2D(const BVH *bvh,
 {
     double mean = 0.0;
 
+    Point2D p = p0;
+    Point2D np;
+    double r0 = bvh_npq(bvh, p, &np);
+
     for (int i = 0; i < N_walks; i++) {
-        Point2D p = p0;
-        Point2D np;
-        double r = bvh_npq(bvh, p, &np);
+        p = p0;
+        double r = r0;
         Sphere2D sphere = {
             .centre = p,
             .radius = r
@@ -114,10 +117,13 @@ double wos_3D(const BVH *bvh,
 {
     double mean = 0.0;
 
+    Point3D p = p0;
+    Point3D np;
+    double r0 = bvh_npq(bvh, p, &np);
+
     for (int i = 0; i < N_walks; i++) {
-        Point3D p = p0;
-        Point3D np;
-        double r = bvh_npq(bvh, p, &np);
+        p = p0;
+        double r = r0;
         Sphere3D sphere = {
             .centre = p,
             .radius = r
