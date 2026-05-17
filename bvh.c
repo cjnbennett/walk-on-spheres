@@ -11,6 +11,7 @@ typedef struct {
     AABB bbox;
     bool leaf;
     int idx;    // if (leaf) => points to mesh->prims[idx], if (!leaf) => points to right child BVHNode at nodes[idx]
+    EberlyCache eberly_cache;   // only needs to be populated if (leaf) and if 3D BVH
 } BVHNode;
 
 typedef struct {   // temporary data structure used to construct an efficient BVH
@@ -95,6 +96,35 @@ static int build_subtree(BVH *bvh, BVHBuildNode *centroids, int start, int end, 
         bvh->nodes[node].leaf = true;
         bvh->nodes[node].idx = start;
         bvh->prims[start] = centroids[start].prim_idx;
+
+        const Mesh *m = bvh->mesh;
+        if (m->dim == 3) {
+            int prim_idx = bvh->prims[start];
+
+            Point3D v0 = m->verts3d[m->prims[3*prim_idx + 0]];
+            Point3D v1 = m->verts3d[m->prims[3*prim_idx + 1]];
+            Point3D v2 = m->verts3d[m->prims[3*prim_idx + 2]];
+
+            Vec3D edge1 = { .x = v1.x - v0.x, .y = v1.y - v0.y, .z = v1.z - v0.z };
+            Vec3D edge2 = { .x = v2.x - v0.x, .y = v2.y - v0.y, .z = v2.z - v0.z };
+            double a = dot(edge1, edge1);
+            double b = dot(edge1, edge2);
+            double c = dot(edge2, edge2);
+            double det = a*c - b*b;
+            double denom = a - 2*b + c;
+
+            bvh->nodes[node].eberly_cache = (EberlyCache){
+                .v0=v0,
+                .edge1=edge1,
+                .edge2=edge2,
+                .a=a,
+                .b=b,
+                .c=c,
+                .det=det,
+                .denom=denom
+            };
+        }
+
         return node;
     }
 
@@ -188,7 +218,6 @@ double bvh_npq_2D(const BVH *bvh, Point2D p, Point2D *nearest) {
 
 // query nearest point to p on bvh->mesh boundary, return distance, write nearest point to *nearest
 double bvh_npq_3D(const BVH *bvh, Point3D p, Point3D *nearest) {
-    const Mesh *m = bvh->mesh;
     double closest_d_sq = INFINITY;         // closest squared distance so far
 
     int stack[STACK_MAX];
@@ -203,14 +232,8 @@ double bvh_npq_3D(const BVH *bvh, Point3D p, Point3D *nearest) {
         if (aabb_d_sq_3D(&curr_node->bbox, p) >= closest_d_sq) continue;   // prune more distant nodes
 
         if (curr_node->leaf) {      // accumulate nearest point query on primitive
-            int s = bvh->prims[curr_node->idx];
-            Point3D v0 = m->verts3d[m->prims[3*s + 0]];
-            Point3D v1 = m->verts3d[m->prims[3*s + 1]];
-            Point3D v2 = m->verts3d[m->prims[3*s + 2]];
-
             Point3D tri_nearest;
-            
-            double d_sq = eberly(p, v0, v1, v2, &tri_nearest);
+            double d_sq = eberly(p, &tri_nearest, &curr_node->eberly_cache);
 
             if (d_sq < closest_d_sq) {
                 closest_d_sq = d_sq;
