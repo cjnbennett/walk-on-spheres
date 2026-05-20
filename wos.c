@@ -1,7 +1,22 @@
+#include <float.h>
+#include <stdio.h>
 #include "bvh.h"
+#include "fastmath.h"
 #include "mesh.h"
 #include "prng.h"
 #include "wos.h"
+
+// weight factors for the screened WoS
+double screening_factor_2D(double alpha, double radius) {
+    double prod = radius * alpha;
+    if (prod < 1e-8) return 1.0;
+    return 1.0 / bessel_I0(prod);
+}
+double screening_factor_3D(double alpha, double radius) {
+    double prod = radius * alpha;
+    if (prod < 1e-8) return 1.0;
+    return prod / sinh(prod);
+}
 
 // perform a singular step of the walk exiting on a sphere
 Point2D step_2D(Sphere2D sphere) {
@@ -63,6 +78,7 @@ Point3D sphere_sample_3D(Sphere3D sphere) {
 double wos_2D(const BVH *bvh,
               Point2D p0,
               double (*source)(Point2D),
+              double alpha,
               double (*boundary)(Point2D),
               double (*green)(Sphere2D,Point2D,Point2D),
               int N_walks,
@@ -83,12 +99,13 @@ double wos_2D(const BVH *bvh,
         };
 
         double sample = 0.0;
+        double weight = 1.0;
 
         while (sphere.radius > epsilon) {
-            // for a PDE containing a source term (e.g. Poisson equation), we must accumulate a source
-            // contribution for non-exiting walks
+            // step includes source accumulation and screening factor
             Point2D sp = sphere_sample(sphere);
-            sample += sphere_volume(sphere) * source(sp) * green(sphere, p, sp);
+            sample += weight * sphere_volume(sphere) * source(sp) * green(sphere, p, sp);
+            weight *= screening_factor_2D(alpha, sphere.radius);
             
             // iterate
             p = step(sphere);
@@ -99,7 +116,7 @@ double wos_2D(const BVH *bvh,
             };
         }
 
-        sample += boundary(np);
+        sample += weight * boundary(np);
         mean += (sample - mean) / (i+1);    // Welford mean
     }
 
@@ -110,6 +127,7 @@ double wos_2D(const BVH *bvh,
 double wos_3D(const BVH *bvh,
               Point3D p0,
               double (*source)(Point3D),
+              double alpha,
               double (*boundary)(Point3D),
               double (*green)(Sphere3D,Point3D,Point3D),
               int N_walks,
@@ -130,12 +148,16 @@ double wos_3D(const BVH *bvh,
         };
 
         double sample = 0.0;
+        double weight = 1.0;
 
         while (sphere.radius > epsilon) {
-            // for a PDE containing a source term (e.g. Poisson equation), we must accumulate a source
-            // contribution for non-exiting walks
+            // step includes source accumulation and screening factor
+            // TODO: alternate (more computationally efficient) method for asborption: Russian roulette
+            // i.e. Bernoulli trial to kill walks early. Screening accumulation generalises better to
+            // non-absorbing cases.
             Point3D sp = sphere_sample(sphere);
-            sample += sphere_volume(sphere) * source(sp) * green(sphere, p, sp);
+            sample += weight * sphere_volume(sphere) * source(sp) * green(sphere, p, sp);
+            weight *= screening_factor_3D(alpha, sphere.radius);
             
             // iterate
             p = step(sphere);
@@ -146,7 +168,7 @@ double wos_3D(const BVH *bvh,
             };
         }
 
-        sample += boundary(np);
+        sample += weight * boundary(np);
         mean += (sample - mean) / (i+1);    // Welford mean
     }
 

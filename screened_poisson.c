@@ -1,6 +1,6 @@
-// This file implements a simple walk-on-spheres (WoS) to solve the Poisson equation ∆u = -f on a
-// domain Ω, with boundary condition u = g on ∂Ω. Here Ω is an arbitary 2D/3D mesh. To recover
-// the Laplace equation, set f = 0.
+// This file implements a simple walk-on-spheres (WoS) to solve the screened Poisson equation
+// ∆u - α²u = -f on a domain Ω, with boundary condition u = g on ∂Ω. Here Ω is an arbitary 2D/3D
+// mesh. Poisson equation: α = 0. Laplace equation: α = 0, f = 0.
 #include <math.h>
 #include <mpi.h>
 #include <stdbool.h>
@@ -17,10 +17,12 @@
 #include "prng.h"
 #include "wos.h"
 
+double ALPHA = 3.0;
+
 // f: source function, defined on Ω
 double f_2D(Point2D p) {
-    // a bump centred at (0.65, 0) with radius 0.15
-    return sqrt((p.x-0.65)*(p.x-0.65) + p.y*p.y) <= 0.15 ? 10.0 : 0.0;
+    // a bump centred at (0.45, 0) with radius 0.15
+    return sqrt((p.x-0.45)*(p.x-0.45) + p.y*p.y) <= 0.5 ? 5.0 : 0.0;
 }
 double f_3D(Point3D p) {
     return 0.0;
@@ -33,7 +35,11 @@ double g_2D(Point2D p) {
                    : 0.0;                   // inner: zero
 }
 double g_3D(Point3D p) {
-    return sqrt(p.x*p.x + p.y*p.y + p.z*p.z) * signbit(p.x);
+    // combination of spherical harmonics
+    double r_sq = p.x*p.x + p.y*p.y;
+    double y50  = p.z * (8*p.z*p.z*p.z*p.z - 40*p.z*p.z*r_sq + 15*r_sq*r_sq);
+    double y5m3 = (8*p.z*p.z - r_sq) * p.y * (3*p.x*p.x - p.y*p.y);
+    return y50 + 4.0 * y5m3;
 }
 
 // Green's function for PDE operator on spherical domain ("harmonic")
@@ -56,8 +62,8 @@ int main(int argc, char **argv) {
     // default params
     char *mesh_filename = "meshes/annulus.obj";   // path to domain mesh .obj on disk
     int Nx = 32, Ny = 32, Nz = 32;                // grid resolution per axis
-    int N_walks = 1e4;                            // number of walks simulated per point
-    double epsilon = 1e-6;                        // tolerance for WoS to boundary
+    int N_walks = 1e3;                            // number of walks simulated per point
+    double epsilon = 1e-2;                        // tolerance for WoS to boundary
 
     // positional args: poisson [Nx Ny] [Nz] [mesh.obj]
     if (rank == 0) {
@@ -152,10 +158,10 @@ int main(int argc, char **argv) {
                 // sample only points in the domain
                 if (Ω.dim == 2) {
                     Point2D p0 = { x, y };
-                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_2D, &g_2D, &G_2D, N_walks, epsilon) : NAN;
+                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_2D, ALPHA, &g_2D, &G_2D, N_walks, epsilon) : NAN;
                 } else {
                     Point3D p0 = { x, y, z };
-                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_3D, &g_3D, &G_3D, N_walks, epsilon) : NAN;
+                    u[i][j][k] = inside_mesh(&Ω, p0) ? wos(bvh, p0, &f_3D, ALPHA, &g_3D, &G_3D, N_walks, epsilon) : NAN;
                 }
             }
         }

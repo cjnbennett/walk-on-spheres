@@ -12,8 +12,8 @@ LDLIBS    = -lm
 
 BUILD_DIR ?= build
 
-TARGET    = $(BUILD_DIR)/poisson
-SRCS      = poisson.c bvh.c wos.c mesh.c inside.c npq.c prng.c
+TARGET    = $(BUILD_DIR)/screened_poisson
+SRCS      = screened_poisson.c bvh.c wos.c mesh.c inside.c npq.c prng.c
 OBJS      = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 HEADERS   = bvh.h wos.h mesh.h inside.h npq.h grid.h hash.h hdf5_io.h prng.h
 
