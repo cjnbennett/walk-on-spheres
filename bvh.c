@@ -213,11 +213,11 @@ double bvh_npq_2D(const BVH *bvh, Point2D p, Point2D *nearest) {
             double r_d_sq = aabb_d_sq_2D(&bvh->nodes[r].bbox, p);
 
             if (l_d_sq <= r_d_sq) {
-                stack[sp++] = l;
                 stack[sp++] = r;
+                stack[sp++] = l;
             } else {
-                stack[sp++] = r;
                 stack[sp++] = l;
+                stack[sp++] = r;
             }
         }
     }
@@ -258,11 +258,11 @@ double bvh_npq_3D(const BVH *bvh, Point3D p, Point3D *nearest) {
             double r_d_sq = aabb_d_sq_3D(&bvh->nodes[r].bbox, p);
 
             if (l_d_sq <= r_d_sq) {
-                stack[sp++] = l;
                 stack[sp++] = r;
+                stack[sp++] = l;
             } else {
-                stack[sp++] = r;
                 stack[sp++] = l;
+                stack[sp++] = r;
             }
         }
     }
