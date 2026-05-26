@@ -4,7 +4,7 @@
 
 namespace wos {
 
-extern thread_local uint64_t prng_state[4];
+extern uint64_t prng_state[4];
 
 void prng_seed(uint64_t seed);
 

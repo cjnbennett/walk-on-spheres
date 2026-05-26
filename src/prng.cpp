@@ -3,7 +3,7 @@
 
 namespace wos {
 
-thread_local uint64_t prng_state[4];
+uint64_t prng_state[4];
 
 void prng_seed(uint64_t seed) {
     // expand one 64-bit seed into the 4-word xoshiro state via splitmix64
