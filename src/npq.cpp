@@ -1,6 +1,8 @@
-#include <math.h>
-#include "mesh.h"
-#include "npq.h"
+#include <cmath>
+#include "wos/mesh.hpp"
+#include "wos/npq.hpp"
+
+namespace wos {
 
 // nearest point query for a line segment. Returns the nearest point distance and writes the nearest point to *nearest
 double npq_seg(Point2D s0, Point2D s1, Point2D p, Point2D *nearest) {
@@ -16,39 +18,37 @@ double npq_seg(Point2D s0, Point2D s1, Point2D p, Point2D *nearest) {
     // clamp projection to endpoints of line seg
     if (par < 0.0) par = 0.0;
     if (par > 1.0) par = 1.0;
-    
+
     nearest->x = s0.x + par*vx;
     nearest->y = s0.y + par*vy;
 
     // distance p->nearest
     double dx = p.x - nearest->x;
     double dy = p.y - nearest->y;
-    return dx*dx + dy*dy;   // d^2
+    return dx*dx + dy*dy;
 }
 
-// nearest point query on 2D Mesh. Returns the nearest point distance and writes the nearest point to *nearest
 // deprecated by bvh npq
-double npq_naive_2D(const Mesh *m, Point2D p, Point2D *nearest) {
-    double closest_d_sq = INFINITY;         // closest squared distance so far
+double npq_naive(const Mesh<2> &m, Point2D p, Point2D *nearest) {
+    double closest_d_sq = INFINITY;
 
-    for (int s = 0; s < m->n_prims; s++) {   // naive O(n_prims) - can be improved using BVH
-        // endpoints of segment
-        Point2D s0 = m->verts2d[m->prims[2*s + 0]];
-        Point2D s1 = m->verts2d[m->prims[2*s + 1]];
+    for (int s = 0; s < m.n_prims(); s++) {
+        Point2D s0 = m.verts[m.prims[2*s + 0]];
+        Point2D s1 = m.verts[m.prims[2*s + 1]];
 
-        Point2D seg_nearest;  // store closest point on current seg
+        Point2D seg_nearest;
         double d_sq = npq_seg(s0, s1, p, &seg_nearest);
 
         if (d_sq < closest_d_sq) {
             closest_d_sq = d_sq;
-            *nearest = seg_nearest; 
+            *nearest = seg_nearest;
         }
     }
 
-    return sqrt(closest_d_sq);
+    return std::sqrt(closest_d_sq);
 }
 
-// nearest point query for a tri via Eberley's algorithm. Returns the nearest point squared distance and writes the nearest point to *nearest
+// nearest point query for a tri via Eberly's algorithm. Returns the nearest point squared distance and writes the nearest point to *nearest
 double eberly(Point3D p, Point3D *nearest, const EberlyCache *eberly_cache) {
     Point3D v0 = eberly_cache->v0;
     Vec3D edge1 = eberly_cache->edge1;
@@ -59,7 +59,7 @@ double eberly(Point3D p, Point3D *nearest, const EberlyCache *eberly_cache) {
     double det = eberly_cache->det;
     double denom = eberly_cache->denom;
 
-    Vec3D BP = { .x = v0.x - p.x, .y = v0.y - p.y, .z = v0.z - p.z };
+    Vec3D BP = Vec3D{v0.x - p.x, v0.y - p.y, v0.z - p.z};
     double d = dot(edge1, BP);
     double e = dot(edge2, BP);
 
@@ -174,59 +174,49 @@ double eberly(Point3D p, Point3D *nearest, const EberlyCache *eberly_cache) {
         }
     }
 
-    *nearest = (Point3D) {
-        .x = v0.x + s*edge1.x + t*edge2.x,
-        .y = v0.y + s*edge1.y + t*edge2.y,
-        .z = v0.z + s*edge1.z + t*edge2.z
+    *nearest = Point3D{
+        v0.x + s*edge1.x + t*edge2.x,
+        v0.y + s*edge1.y + t*edge2.y,
+        v0.z + s*edge1.z + t*edge2.z
     };
 
-    Vec3D displacement = {
-        .x = nearest->x - p.x,
-        .y = nearest->y - p.y,
-        .z = nearest->z - p.z
+    Vec3D displacement = Vec3D{
+        nearest->x - p.x,
+        nearest->y - p.y,
+        nearest->z - p.z
     };
     return dot(displacement, displacement);
 }
 
-// nearest point query on 3D Mesh. Returns the nearest point distance and writes the nearest point to *nearest
-// deprecated by bvh npq implementation
-double npq_naive_3D(const Mesh *m, Point3D p, Point3D *nearest) {
-    double closest_d_sq = INFINITY;         // closest squared distance so far
+// deprecated by bvh npq
+double npq_naive(const Mesh<3> &m, Point3D p, Point3D *nearest) {
+    double closest_d_sq = INFINITY;
 
-    for (int s = 0; s < m->n_prims; s++) {   // naive O(n_prims) - can be improved using BVH
-        // endpoints of segment
-        Point3D v0 = m->verts3d[m->prims[3*s + 0]];
-        Point3D v1 = m->verts3d[m->prims[3*s + 1]];
-        Point3D v2 = m->verts3d[m->prims[3*s + 2]];
+    for (int s = 0; s < m.n_prims(); s++) {
+        Point3D v0 = m.verts[m.prims[3*s + 0]];
+        Point3D v1 = m.verts[m.prims[3*s + 1]];
+        Point3D v2 = m.verts[m.prims[3*s + 2]];
 
-        Point3D tri_nearest;  // store closest point on current tri
+        Point3D tri_nearest;
 
-        // construct (artificial) Eberly cache
-        Vec3D edge1 = { .x = v1.x - v0.x, .y = v1.y - v0.y, .z = v1.z - v0.z };
-        Vec3D edge2 = { .x = v2.x - v0.x, .y = v2.y - v0.y, .z = v2.z - v0.z };
+        Vec3D edge1 = Vec3D{v1.x - v0.x, v1.y - v0.y, v1.z - v0.z};
+        Vec3D edge2 = Vec3D{v2.x - v0.x, v2.y - v0.y, v2.z - v0.z};
         double a = dot(edge1, edge1);
         double b = dot(edge1, edge2);
         double c = dot(edge2, edge2);
         double det = a*c - b*b;
         double denom = a - 2*b + c;
-        EberlyCache eberly_cache = {
-            .v0=v0,
-            .edge1=edge1,
-            .edge2=edge2,
-            .a=a,
-            .b=b,
-            .c=c,
-            .det=det,
-            .denom=denom
-        };
+        EberlyCache eberly_cache{v0, edge1, edge2, a, b, c, det, denom};
 
         double d_sq = eberly(p, &tri_nearest, &eberly_cache);
 
         if (d_sq < closest_d_sq) {
             closest_d_sq = d_sq;
-            *nearest = tri_nearest; 
+            *nearest = tri_nearest;
         }
     }
 
-    return sqrt(closest_d_sq);
+    return std::sqrt(closest_d_sq);
+}
+
 }

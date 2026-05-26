@@ -2,7 +2,9 @@
 #pragma once
 #include <stdint.h>
 
-extern _Thread_local uint64_t prng_state[4];
+namespace wos {
+
+extern thread_local uint64_t prng_state[4];
 
 void prng_seed(uint64_t seed);
 
@@ -26,4 +28,6 @@ static inline uint64_t prng_u64(void) {
 // uniform double in [0, 1) - use top 53 bits (double mantissa precision)
 static inline double prng_unit(void) {
     return (prng_u64() >> 11) * (1.0 / (1ULL << 53));
+}
+
 }

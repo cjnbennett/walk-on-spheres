@@ -1,7 +1,9 @@
-#include "hash.h"
-#include "prng.h"
+#include "wos/hash.hpp"
+#include "wos/prng.hpp"
 
-_Thread_local uint64_t prng_state[4];
+namespace wos {
+
+thread_local uint64_t prng_state[4];
 
 void prng_seed(uint64_t seed) {
     // expand one 64-bit seed into the 4-word xoshiro state via splitmix64
@@ -12,4 +14,6 @@ void prng_seed(uint64_t seed) {
 
     // xoshiro requires non-zero state
     if (!(prng_state[0] | prng_state[1] | prng_state[2] | prng_state[3])) prng_state[0] = 1;
+}
+
 }
