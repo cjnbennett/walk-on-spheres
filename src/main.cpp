@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     const char *eq_name = "screened_poisson";
     const char *mesh_filename = "meshes/annulus.obj";
     int Nx = 32, Ny = 32, Nz = 32;
-    int N_walks = 1'000;
+    int N_walks = 10'000;
     double epsilon = 1e-2;
 
     // positional args: wos [equation] [Nx Ny] [Nz] [mesh.obj]

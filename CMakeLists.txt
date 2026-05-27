@@ -33,6 +33,7 @@ add_executable(wos
     src/equations/laplace.cpp
     src/equations/poisson.cpp
     src/equations/screened_poisson.cpp
+    src/equations/helmholtz.cpp
 )
 target_include_directories(wos PRIVATE src)
 target_link_libraries(wos PRIVATE wos_core)

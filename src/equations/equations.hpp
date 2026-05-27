@@ -10,10 +10,12 @@ struct Equation {
 extern const Equation laplace;
 extern const Equation poisson;
 extern const Equation screened_poisson;
+extern const Equation helmholtz;
 
 // equation registry
 inline const Equation *const equation_registry[] = {
     &laplace,
     &poisson,
     &screened_poisson,
+    &helmholtz,
 };
