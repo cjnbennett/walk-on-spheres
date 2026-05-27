@@ -10,12 +10,10 @@ using namespace wos;
 
 namespace {
 
-constexpr double ALPHA = 5.0;
-
 struct ScreenedPoisson2D {
     [[maybe_unused]] static constexpr bool has_source = true;
     [[maybe_unused]] static constexpr bool has_screening = true;
-    double alpha;
+    static constexpr double alpha = 5.0;
 
     double source(Point2D p) const {
         // a bump centred at (0.45, 0) with radius 0.5
@@ -28,9 +26,12 @@ struct ScreenedPoisson2D {
                        : 0.0;                   // inner: zero
     }
 
-    // Green's function for Laplace operator on 2D spherical domain
+    // Green's function for screened Poisson operator on 2D spherical domain
     double green(Sphere2D sphere, Point2D x, Point2D y) const {
-        return std::log(sphere.radius / dist(x, y)) / (2*M_PI);
+        double r = dist(x, y);
+        double prod = r * alpha;
+        double prod_R = sphere.radius * alpha;
+        return (bessel_K0(prod) - bessel_I0(prod) * bessel_K0(prod_R) / bessel_I0(prod_R)) / (2*M_PI);
     }
 
     // weight factor: 1 / I_0(αr) for the screened Poisson eq in 2D
@@ -44,7 +45,7 @@ struct ScreenedPoisson2D {
 struct ScreenedPoisson3D {
     [[maybe_unused]] static constexpr bool has_source = true;
     [[maybe_unused]] static constexpr bool has_screening = true;
-    double alpha;
+    static constexpr double alpha = 5.0;
 
     double source(Point3D p) const {
         (void)p;
@@ -59,10 +60,12 @@ struct ScreenedPoisson3D {
         return y50 + 4.0 * y5m3;
     }
 
-    // Green's function for Laplace operator on 3D spherical domain
+    // Green's function for screened Poisson operator on 3D spherical domain
     double green(Sphere3D sphere, Point3D x, Point3D y) const {
         double r = dist(x, y);
-        return (sphere.radius - r) / (4*M_PI * r * sphere.radius);
+        double prod = r * alpha;
+        double prod_R = sphere.radius * alpha;
+        return (std::sinh(prod_R - prod)) / (4*M_PI * r * std::sinh(prod_R));
     }
 
     // weight factor
@@ -74,10 +77,10 @@ struct ScreenedPoisson3D {
 };
 
 int run_2D(int rank, int size, const char *mesh, int Nx, int Ny, int Nz, int N_walks, double eps) {
-    return run<2>(rank, size, mesh, Nx, Ny, Nz, N_walks, eps, ScreenedPoisson2D{ALPHA});
+    return run<2>(rank, size, mesh, Nx, Ny, Nz, N_walks, eps, ScreenedPoisson2D{});
 }
 int run_3D(int rank, int size, const char *mesh, int Nx, int Ny, int Nz, int N_walks, double eps) {
-    return run<3>(rank, size, mesh, Nx, Ny, Nz, N_walks, eps, ScreenedPoisson3D{ALPHA});
+    return run<3>(rank, size, mesh, Nx, Ny, Nz, N_walks, eps, ScreenedPoisson3D{});
 }
 
 }   // anonymous namespace
